@@ -61,16 +61,31 @@ def lis_th():
     while True:
         txt = recvOutput()
         print(txt, end='')
-        sleep(0.5)
+        sleep(1)
 
 listenin_th = threading.Thread(target=lis_th, args=())
 listenin_th.start()
 
+"""
 while True:
     inp = input()
     txt = sendPayload(inp)
     print(recvOutput(), end='')
+"""
 
+import cmd
+
+class Shell(cmd.Cmd):
+    
+    prompt = ''
+
+    def default(self, line):
+        sendPayload(line)
+        print(recvOutput(), end='')
+
+print("cmd zaman")
+
+Shell().cmdloop()
 
 
 print("bitirmek gerek tmp silmek fln")
