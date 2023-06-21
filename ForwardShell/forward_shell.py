@@ -7,6 +7,7 @@ from base64 import b64encode
 import random
 import argparse
 from time import sleep
+import re
 
 # EDIT THIS
 url = ""
@@ -95,9 +96,38 @@ def main():
 
 argparser = argparse.ArgumentParser(description='Forward Shell')
 argparser.add_argument('-u', '--url', help='URL to send requests to', required=True)
-argparser.add_argument('-p', '--proxy', help='Proxy to use (http:127.0.0.1:8080)', required=False)
+argparser.add_argument('-x', '--proxy', help='Proxy to use', required=False)
 argparser.add_argument('-d', '--data', help='Send POST request', required=False)
-argparser.add_argument('-H', '--header', help='Add header to request', required=False)
+argparser.add_argument('-H', '--headers', help='Add header to request', required=False)
+argparser.add_argument('-t', '--interval', help='Interval to check for new output', required=False)
+argparser.add_argument('-k', '--insecure', help='Disable SSL verification', required=False, action='store_true')
 
 if __name__ == "__main__":
+
+    args = argparser.parse_args()
+
+    url = args.url
+    proxy = args.proxy
+    data = args.data
+    headers = args.headers
+    interval = args.interval
+
+    if proxy:
+        proxies = {}
+        # inputs like http://127.0.0.1:8080 and http:127.0.0.1:8080 are accepted, select ip and port
+        if proxy.startswith("http://"):
+            proxy = proxy[7:]
+            proxies["http"] = proxy
+        elif proxy.startswith("https://"):
+            proxy = proxy[8:]
+            proxies["https"] = proxy
+        else:
+            proxies = None
+
+    if interval:
+        interval = float(interval)
+    else:
+        interval = 1
+
+
     main()
