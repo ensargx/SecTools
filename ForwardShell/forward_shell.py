@@ -112,6 +112,8 @@ if __name__ == "__main__":
     headers = args.headers
     interval = args.interval
 
+    session = requests.Session()
+
     if proxy:
         proxies = {}
         # inputs like http://127.0.0.1:8080 and http:127.0.0.1:8080 are accepted, select ip and port
@@ -122,7 +124,23 @@ if __name__ == "__main__":
             proxy = proxy[8:]
             proxies["https"] = proxy
         else:
-            proxies = None
+            # Error
+            print("Invalid proxy")
+            sys.exit(1)
+
+        session.proxies = proxies
+
+    # Parse headers cmd headers will be added later
+    if headers:
+        cmd_headers = {}
+        headers = headers.split(",")
+        for header in headers:
+            if not "^CMD^" in header:
+                header = header.split(":")
+                session.headers[header[0]] = header[1]
+            else:
+                header = header.split(":")
+                cmd_headers[header[0]] = header[1]    
 
     if interval:
         interval = float(interval)
