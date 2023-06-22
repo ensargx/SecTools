@@ -4,4 +4,4 @@ Forward Shell can be used to gain shell access in an enviorement which you canno
 
 ## Usage
 
-python3 forwardshell.py -u [URL] 
+python3 forward_shell.py -u [URL] 
