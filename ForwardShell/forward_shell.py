@@ -98,9 +98,10 @@ argparser = argparse.ArgumentParser(description='Forward Shell')
 argparser.add_argument('-u', '--url', help='URL to send requests to', required=True)
 argparser.add_argument('-x', '--proxy', help='Proxy to use', required=False)
 argparser.add_argument('-d', '--data', help='Send POST request', required=False)
-argparser.add_argument('-H', '--headers', help='Add header to request', required=False)
+argparser.add_argument('-H', '--header', help='Add header to request', required=False)
 argparser.add_argument('-t', '--interval', help='Interval to check for new output', required=False)
 argparser.add_argument('-k', '--insecure', help='Disable SSL verification', required=False, action='store_true')
+argparser.add_argument('--upgrade-tty', help='Upgrade to a full interactive shell', required=False, action='store_true')
 
 if __name__ == "__main__":
 
@@ -147,5 +148,10 @@ if __name__ == "__main__":
     else:
         interval = 1
 
+    if args.insecure:
+        session.verify = False
+
+    if args.upgrade:
+        print("TTY shell not implemented yet")
 
     main()
