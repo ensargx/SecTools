@@ -1,7 +1,7 @@
 # Forward Shell
 
-Hala uzerinde calisiyorum.
+Forward Shell can be used to gain shell access in an enviorement which you cannot access back to your machine from target machine.  
 
 ## Usage
 
-python3 forwardshell.py
+python3 forwardshell.py -u [URL] 
