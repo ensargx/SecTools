@@ -156,6 +156,62 @@ def createPipeListen():
 
 
 def main():
+    args = argparser.parse_args()
+
+    url = args.url
+    proxy = args.proxy
+    data = args.data
+    headers = args.headers
+    interval = args.interval
+
+    session = requests.Session()
+
+    # TODO : Parse proxy input
+    if proxy:
+        proxies = {}
+        # inputs like http://127.0.0.1:8080 and http:127.0.0.1:8080 are accepted, select ip and port
+        if proxy.startswith("http://"):
+            proxy = proxy[7:]
+            proxies["http"] = proxy
+        elif proxy.startswith("https://"):
+            proxy = proxy[8:]
+            proxies["https"] = proxy
+        else:
+            # Error
+            print("[-] Invalid proxy")
+            sys.exit(1)
+
+        session.proxies = proxies
+
+    # Parse headers cmd headers will be added later
+    if headers:
+        cmd_headers = {}
+        headers = headers.split(",")
+        for header in headers:
+            if not "^CMD^" in header:
+                header = header.split(":")
+                session.headers[header[0]] = header[1]
+            else:
+                header = header.split(":")
+                cmd_headers[header[0]] = header[1]    
+
+    if interval:
+        interval = float(interval)
+    else:
+        interval = 1
+
+    if args.insecure:
+        session.verify = False
+
+    if args.upgrade:
+        print("[*] TTY shell not fully implemented yet")
+
+    # Create session
+    shell = WebShell(url, session, data, cmd_headers, interval, args.upgrade)
+
+    # Run session
+    shell.run()
+
     """
     init = threading.Thread(target=createPipeListen, args=())
     init.start()
@@ -217,54 +273,4 @@ argparser.add_argument('-k', '--insecure', help='Disable SSL verification', requ
 argparser.add_argument('--upgrade-tty', help='Upgrade to a full interactive shell', required=False, action='store_true')
 
 if __name__ == "__main__":
-
-    args = argparser.parse_args()
-
-    url = args.url
-    proxy = args.proxy
-    data = args.data
-    headers = args.headers
-    interval = args.interval
-
-    session = requests.Session()
-
-    if proxy:
-        proxies = {}
-        # inputs like http://127.0.0.1:8080 and http:127.0.0.1:8080 are accepted, select ip and port
-        if proxy.startswith("http://"):
-            proxy = proxy[7:]
-            proxies["http"] = proxy
-        elif proxy.startswith("https://"):
-            proxy = proxy[8:]
-            proxies["https"] = proxy
-        else:
-            # Error
-            print("Invalid proxy")
-            sys.exit(1)
-
-        session.proxies = proxies
-
-    # Parse headers cmd headers will be added later
-    if headers:
-        cmd_headers = {}
-        headers = headers.split(",")
-        for header in headers:
-            if not "^CMD^" in header:
-                header = header.split(":")
-                session.headers[header[0]] = header[1]
-            else:
-                header = header.split(":")
-                cmd_headers[header[0]] = header[1]    
-
-    if interval:
-        interval = float(interval)
-    else:
-        interval = 1
-
-    if args.insecure:
-        session.verify = False
-
-    if args.upgrade:
-        print("TTY shell not fully implemented yet")
-
     main()
